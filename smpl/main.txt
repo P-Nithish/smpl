@@ -1,0 +1,487 @@
+import re
+
+strings = []
+def generate_strings(limit):
+    strings = [['']]
+
+    for level in range(1, limit+1):
+        new_strings = []
+
+        for char in 'abcd':
+            for string in strings[level-1]:
+                new_strings.append(string + char)
+            print(new_strings)
+
+        strings.append(new_strings)
+
+    #print(strings)
+
+    result = []
+    for string_list in strings:
+        result.extend(string_list)
+
+    return result
+
+regex=input()
+
+regex1='^('
+i=0
+while i<len(regex) :
+  if regex[i] >='a'and regex[i]<= 'z':
+    regex1+=regex[i]
+  elif regex[i]=='*':
+    regex1+='*'
+  elif regex[i]=='+':
+    regex1+='|'
+  elif regex[i]=='(':
+    regex1+='('
+    count=i
+    while regex[count]!=')':
+      if regex[count] >='a'and regex[count]<= 'z':
+        regex1+=regex[count]
+      elif regex[count]=='*':
+        regex1+='*'
+      elif regex[count]=='+':
+        regex1+='|'
+      count+=1
+    i=count
+    regex1+=')'
+  i+=1
+regex1+=')$'
+print(regex1)
+strings = generate_strings(5)
+matching_strings = [s for s in strings if re.match(regex1, s)]
+if matching_strings[0]=='':
+  matching_strings[0]='E'
+print(matching_strings)
+---------------------------------------------------
+
+'''
+    c. Write a program to check whether the given string is accepted by the given DFA or not. DFA can be given as a table.
+'''
+
+'''
+    States => a, b, c, ...
+    Inputs => 0, 1, 2, ...
+    word contains only 0's and 1's.
+'''
+
+from prettytable import PrettyTable
+import collections
+
+# ------------------------ CREATE STATES START ----------------------------------
+
+# Function to create a list of states :
+def create_states(c) :
+
+    # List of states.
+    states = []
+
+    for i in range(c) :
+        states += ['q' + str(i)]
+
+    return states
+
+# ------------------------ CREATE STATES END ----------------------------------
+
+
+# ------------------------ IS STATE START ----------------------------------
+
+# Function to check whether a state is valid or not :
+def isState(s, states) :
+    return s in states
+
+# ------------------------ IS STATE END ----------------------------------
+
+
+# Function to check whether the word satisfies given DFA :
+def isWord(word, f, DFA, inputs) :
+
+    # Creating a dictionary for easy index find.
+    inp = {}
+
+    for i in range(len(inputs)) :
+        inp[inputs[i]] = i
+
+    curr = 'q0'
+
+    for char in word :
+        curr = DFA[curr][inp[char]]
+
+    return curr in f
+
+# Function to print the DFA :
+def printDFA(DFA, inp) :
+
+    # Creating a PrettyTable object.
+    table = PrettyTable(['States'] + inp)
+
+    for k, v in DFA.items() :
+        table.add_row([k] + v)
+
+    print(table)
+
+    '''
+    print('\n------------------------------------------')
+    print('| {0:^8s} |'.format('States'), end = ' ')
+    for i in range(len(inp)) :
+        print(' {0:^6s} |'.format(inputs[i]), end = " ")
+    print('\n------------------------------------------')
+
+    for k, v in DFA.items() :
+        print('| {0:^8s} |'.format(k), end = ' ')
+
+        for i in range(len(v)) :
+            print(' {0:^6s} |'.format(v[i]), end = " ")
+
+        print()
+    print('------------------------------------------\n')'''
+
+
+# DFA Table(Dictionary) :
+DFA = {}
+
+# Number of inputs.
+inputCount = int(input("\nEnter number of inputs : "))
+
+# Enter all the inputs :
+inputs = list(map(str, input("\nEnter all the inputs(in order) : ").split()))
+
+# Number of states.
+stateCount = int(input("\nEnter number of states : "))
+
+# List of states.
+states = create_states(stateCount)
+
+# Number of rows.
+row = int(input("\nEnter number of rows the DFA Table has : "))
+
+# Inputing the productions :
+
+i = 0
+while i < row :
+
+    print('\nRow {indx} :\n'.format(indx = i + 1))
+
+    # Inputting present state.
+    present = input("\tEnter present state : ")
+
+    # If an invalid state is entered loop runs untill valid input :
+    while not isState(present, states) :
+        present = input("\n\tInvalid state!, Enter present state again : ")
+
+
+    actions = []
+    print()
+    for j in range(inputCount) :
+
+        action = input("\t\tEnter action for input {inp} : ".format(inp = inputs[j]))
+
+        # If an invalid state is entered loop runs untill valid input :
+        while not isState(action, states) :
+            action = input("\t\tInvalid state!, Enter action for input {inp} : ".format(inp = inputs[j]))
+
+        actions += [action]
+
+    # Adding productions to DFA(dictionary) :
+    if present not in DFA :
+        DFA[present] = actions
+
+    else :
+        DFA[present] += actions
+
+    i += 1
+
+# Final state
+final = list(map(str, input("\nEnter all the final states : ").split()))
+
+for i in range(len(final)) :
+    # If an invalid state is entered loop runs untill valid input :
+    while not isState(final[i], states) :
+        final[i] = input("\t\tInvalid state!, Enter final state again! : ")
+
+print()
+printDFA(DFA, inputs)
+print()
+
+word = input("\nEnter a word to check in given DFA : ")
+
+print('\nThe word is accepted\n') if isWord(word, final, DFA, inputs) else print('\nThe word is not accepted\n')
+
+------------------------------------------------------
+
+
+''' b. Write a program to find ϵ-closure for each state in a given NFA. '''
+
+from prettytable import PrettyTable
+
+# Function to create a list of states :
+def create_states(c) :
+
+    # List of states.
+    states = ['-']  # NO state.
+
+    for i in range(c) :
+        states += ['q' + str(i)]
+
+    return states
+
+# Function to check whether a state is valid or not :
+def isState(s, states) :
+    return s in states
+
+# Function to print the NFA :
+def printNFA(NFA, inp) :
+
+    # Creating a PrettyTable object.
+    table = PrettyTable(['States'] + inp + ['Epsilon'])
+
+    for k, v in NFA.items() :
+        table.add_row([k] + v)
+
+    print(table)
+
+# Function to find epsilon closure of a given NFA :
+def EClosure(NFA) :
+
+    # Epsilon closures.
+    ans = {}
+
+    for k, v in NFA.items() :
+
+        # Has some epsilon productions :
+        if v[-1] != [] :
+
+            # Curr state has only self Epsilon production :
+            if v[-1] == [k] :
+                ans[k] = [k]
+
+            # Curr state has outgoing epsilon productions :
+            else :
+
+                # Epsilon closure of current state.
+                closr = v[-1]
+
+                # Adding curr state to ɛ closure of curr state.
+                if k not in closr :
+                    closr = [k] + closr
+
+                #ans[k] = closr
+
+                i = 1
+                while i < len(closr) :
+
+                    # Current state to be checked for Epsilon closures :
+                    s = closr[i]
+
+                    # Epsilon closure of current state.
+                    currClosr = NFA[s][-1]
+
+                    for s in currClosr :
+                        if s not in closr :
+                            closr += [s]
+
+                    i += 1
+
+                ans[k] = closr
+
+        # Curr state doesn't have any epsilon production :
+        else :
+            ans[k] = [k]
+
+    return ans
+
+
+# Function to print the Epsilon Closure :
+def printEC(E) :
+    table = PrettyTable(['State', 'Epsilon Closures'])
+
+    for k, v in E.items() :
+        table.add_row([k, v])
+
+    print(table)
+
+
+# NFA Table(Dictionary) :
+NFA = {}
+
+# Number of inputs.
+inputCount = int(input("\nEnter number of inputs : "))
+
+# Enter all the inputs :
+inputs = list(map(str, input("\nEnter all the inputs(in order) : ").split()))
+
+# Number of states.
+stateCount = int(input("\nEnter number of states : "))
+
+# Creating list of states.
+states = create_states(stateCount)
+
+# Inputing the productions :
+i = 0
+while i < stateCount :
+
+    print('\nState {count} :\n'.format(count = i + 1))
+
+    # Inputting present state.
+    present = input("\tEnter present state : ")
+
+    # If an invalid state is entered loop runs untill valid input :
+    while not isState(present, states) :
+        present = input("\n\tInvalid state!, Enter present state again : ")
+
+
+    actions = []
+    print()
+    for j in range(inputCount) :
+
+        action = input("\t\tEnter action for input {inp} : ".format(inp = inputs[j]))
+
+        # If an invalid state is entered loop runs untill valid input :
+        while not isState(action, states) :
+            action = input("\t\tInvalid state!, Enter action for input {inp} : ".format(inp = inputs[j]))
+
+        actions += [action]
+
+    ########################################## Handling Epsilon Productions START ##########################################
+    action = []
+
+    # If there are Epsilon productions :
+    if input('\nEpsilon production ?? (y/n) : ') == 'y' :
+        action = list(map(str, input("\nEnter all the states that can be reached from {p} through epsilon production : ".format(p = present)).split() ))
+
+        # Validating states :
+        for k in range(len(action)) :
+            while not isState(action[k], states) :
+                action[k] = input("\t\tInvalid state!, Enter action again : ")
+
+    actions += [action]
+
+    ########################################## Handling Epsilon Productions END!! ##########################################
+
+    # Adding productions to NFA(dictionary) without overwriting:
+    if present not in NFA :
+        NFA[present] = actions
+
+    else :
+        NFA[present] += actions
+
+    i += 1
+
+# Final state
+final = list(map(str, input("\nEnter final state : ").split()))
+
+for i in range(len(final)) :
+    # If an invalid state is entered loop runs untill valid input :
+    while not isState(final[i], states) :
+        final[i] = input("\t\tInvalid state!, Enter final state again! : ")
+
+print('\nNFA :-\n')
+printNFA(NFA, inputs)
+print()
+
+Eps = EClosure(NFA)
+
+print('\nEpsilon closures :-\n')
+printEC(Eps)
+print()
+
+------------------------------
+
+from random import randint
+
+# Removing whitespace and empty lines :
+def remove(lines) :
+
+    lines = [line.strip() for line in lines if line != '\n']
+
+    return lines
+
+
+# Address calculation :
+def addr(pStrt, rStrt, sAddr) :  # Input is a hexadecimal number.
+    return hex(int(hex( int(sAddr, 16) - int(pStrt, 16) )[2 : ], 16) + int(rStrt, 16) )[2:]
+
+    '''
+        pStrt => Starting address of program.
+        rStrt => Runtime starting address.
+        sAddr => Address of symbol.
+    '''
+
+
+# Function to print table from dictionary :
+def printTable(t) :
+    '''print('-----------------------------------------------------------------------------------')
+    print('|{0:^10s} | {1:^15s} | {2:^15s} | {3:^15s} | {4:^15s} | {5:<8s}|'.format('Symbol', 'A Strt Addr', 'Symbol Addr', 'R Strt Addr', 'symbol Addr', 'Ref'))
+    for k, v in t.items() :
+        print('|{0:^10s} | {1:^15s} | {2:^15s} | {3:^15s} | {4:^15s} | {5}|'.format(k, v[0], v[1], v[2], v[3], ', '.join(v[4:])))
+
+    print('-----------------------------------------------------------------------------------')'''
+
+    print('{0:^10s} {1:^15s} {2:^15s} {3:^15s} {4:^15s} {5:<8s}\n'.format('Symbol', 'A Strt Addr', 'Symbol Addr', 'R Strt Addr', 'symbol Addr', 'Ref'))
+    for k, v in t.items() :
+        print('{0:^10s} {1:^15s} {2:^15s} {3:^15s} {4:^15s} {5}'.format(k, v[0], v[1], v[2], v[3], ', '.join(v[4:])))
+
+
+
+# Reading program from the file :
+with open('prgrm.txt') as file :
+    lines = file.readlines()
+
+
+# Removing whitespace and empty lines :
+lines = remove(lines)
+
+# Number of lines
+n = len(lines)
+
+# Dictionary to store all details of symbols.
+symbol = {}
+
+# Dictionary to store the details of each variable.
+table = {}
+
+# Dictionary to store the reference for each symbol.
+ref = {}
+
+# storing address and program name for each symbol defined :
+for i in range(0, n, 6) :
+
+    name = lines[i].split('_')[1]  # Program name.
+
+    strtAddr = lines[i].split('_')[2][2 : ]  # Program's starting address.
+
+    var = lines[i + 1].split('_')[1 : ]  # Deals with D_... line.
+
+    # Runtime Starting address of each program.
+    strt = str(randint(1000, 10000))  # Hexadecimal value.
+
+    #print('strt', strt)
+
+    # Storing address and program of each symbol
+    for j in range(0, len(var), 2) :
+        symbol[var[j]] = [var[j + 1], name, strtAddr, strt]
+
+    # Dealing with references :
+    r = lines[i + 2].split('_')[1 : ]
+
+    for symbl in r :
+        if symbl not in ref :
+            ref[symbl] = [name]
+
+        else :
+            ref[symbl] += [name]
+
+
+# Creating table :
+for k, v in symbol.items() :
+
+    table[k] = [v[2], v[0], v[-1], addr(v[2], v[-1], v[0])]
+
+    if k in ref :
+        table[k] += ref[k]
+
+# Displaying the output :
+print('\nTable :\n')
+printTable(table)
+print()
