@@ -631,3 +631,243 @@ else:
 
 
 ============================================================================================
+
+
+
+import numpy as np
+import matplotlib.pyplot as plt
+from sympy import symbols, solve
+import pandas as pd
+from scipy.stats import ttest_ind
+from statsmodels.stats.weightstats import ztest
+
+x = [i for i in range(1, 51)]
+y = [
+    29,20,25,29,31,33,34,27,26,30,
+    29,28,28,26,27,26,30,28,26,30,
+    31,30,37,30,33,31,27,33,37,29,
+    28,30,29,34,30,20,17,23,24,34,
+    36,35,33,29,25,27,30,29,28,32
+]
+n = len(y)
+
+x_2 = [each**2 for each in x]
+x_3 = [each**3 for each in x]
+x_4 = [each**4 for each in x]
+x_5 = [each**5 for each in x]
+x_6 = [each**6 for each in x]
+xy = [val*y[i] for i, val in enumerate(x)]
+x2y = [val*y[i] for i, val in enumerate(x_2)]
+x3y = [val*y[i] for i, val in enumerate(x_3)]
+x4y = [val*y[i] for i, val in enumerate(x_4)]
+
+lin_b = ((n*sum(xy)) - (sum(x)*sum(y)))/((n*sum(x_2)) - (sum(x)**2))
+lin_a = np.mean(y) - (lin_b * np.mean(x))
+y_lin = [lin_a+(lin_b*each) for each in x]
+
+a, b, c = symbols('a b c')
+eq1 = n*a + sum(x)*b + sum(x_2)*c - sum(y)
+eq2 = sum(x)*a + sum(x_2)*b + sum(x_3)*c - sum(xy)
+eq3 = sum(x_2)*a + sum(x_3)*b + sum(x_4)*c - sum(x2y)
+sols = solve((eq1, eq2, eq3), (a, b, c))
+quad_a = float(sols[a])
+quad_b = float(sols[b])
+quad_c = float(sols[c])
+y_quad = [quad_a+(quad_b*each)+(quad_c*(each**2)) for each in x]
+
+a, b, c, d = symbols('a b c d')
+eq1 = n*a + sum(x)*b + sum(x_2)*c + sum(x_3)*d - sum(y)
+eq2 = sum(x)*a + sum(x_2)*b + sum(x_3)*c + sum(x_4)*d - sum(xy)
+eq3 = sum(x_2)*a + sum(x_3)*b + sum(x_4)*c + sum(x_5)*d - sum(x2y)
+eq4 = sum(x_3)*a + sum(x_4)*b + sum(x_5)*c + sum(x_6)*d - sum(x3y)
+sols1 = solve((eq1, eq2, eq3, eq4), (a, b, c, d))
+cubic_a = float(sols1[a])
+cubic_c = float(sols1[c])
+cubic_b = float(sols1[b])
+cubic_d = float(sols1[d])
+
+y_cubic = [cubic_a+(cubic_b*each)+(cubic_c*(each**2))+(cubic_d*(each**3)) for each in x]
+
+df = pd.DataFrame({
+    "X" : x,
+    "codedx":x,
+    "linear":y_lin,
+    "quadratic":y_quad,
+    "cubic":y_cubic
+    })
+             
+print(df)       
+
+plt.plot(x, y_lin, color='red', label='Linear Regression')
+plt.plot(x, y_quad, color='green', label='Quadratic Regression')
+plt.plot(x, y_cubic, color='blue', label='Cubic Regression')                                  
+plt.legend()
+plt.show()
+
+# Convert predictions to float numpy arrays
+y_lin_arr = np.array(y_lin, dtype=float)
+y_quad_arr = np.array(y_quad, dtype=float)
+y_cubic_arr = np.array(y_cubic, dtype=float)
+y_arr = np.array(y, dtype=float)
+
+# t-test Linear vs Actual
+t_stat, p_val = ttest_ind(y_lin_arr, y_arr, equal_var=False)
+print(f"\nLinear vs Actual -> t = {t_stat:.5f}, p = {p_val:.5f}")
+print("Result:", "Significant difference" if p_val < 0.05 else "No significant difference")
+
+# t-test Quadratic vs Actual
+t_stat1, p_val1 = ttest_ind(y_quad_arr, y_arr, equal_var=False)
+print(f"\nQuadratic vs Actual -> t = {t_stat1:.5f}, p = {p_val1:.5f}")
+print("Result:", "Significant difference" if p_val1 < 0.05 else "No significant difference")
+
+# t-test Cubic vs Actual
+t_stat2, p_val2 = ttest_ind(y_cubic_arr, y_arr, equal_var=False)
+print(f"\nCubic vs Actual -> t = {t_stat2:.5f}, p = {p_val2:.5f}")
+print("Result:", "Significant difference" if p_val2 < 0.05 else "No significant difference")
+
+# Convert predictions and actuals to arrays
+y_lin_arr = np.array(y_lin, dtype=float)
+y_quad_arr = np.array(y_quad, dtype=float)
+y_cubic_arr = np.array(y_cubic, dtype=float)
+y_arr = np.array(y, dtype=float)
+
+# One-sample z-test: test if mean(predicted - actual) = 0
+# Linear
+z_stat_lin, p_val_lin = ztest(y_lin_arr, y_arr)
+print(f"\nLinear vs Actual -> z = {z_stat_lin:.5f}, p = {p_val_lin:.5f}")
+print("Result:", "Significant difference" if p_val_lin < 0.05 else "No significant difference")
+
+# Quadratic
+z_stat_quad, p_val_quad = ztest(y_quad_arr, y_arr)
+print(f"\nQuadratic vs Actual -> z = {z_stat_quad:.5f}, p = {p_val_quad:.5f}")
+print("Result:", "Significant difference" if p_val_quad < 0.05 else "No significant difference")
+
+# Cubic
+z_stat_cubic, p_val_cubic = ztest(y_cubic_arr, y_arr)
+print(f"\nCubic vs Actual -> z = {z_stat_cubic:.5f}, p = {p_val_cubic:.5f}")
+print("Result:", "Significant difference" if p_val_cubic < 0.05 else "No significant difference")
+
+                                                      
+
+
+===============================================================
+
+
+
+import numpy as np
+import matplotlib.pyplot as plt
+from sympy import symbols, solve
+import pandas as pd
+from scipy.stats import ttest_ind
+from scipy.stats import t
+from statsmodels.stats.weightstats import ztest
+
+x = [i for i in range(1, 51)]
+y = [
+    29,20,25,29,31,33,34,27,26,30,
+    29,28,28,26,27,26,30,28,26,30,
+    31,30,37,30,33,31,27,33,37,29,
+    28,30,29,34,30,20,17,23,24,34,
+    36,35,33,29,25,27,30,29,28,32
+]
+n = len(y)
+x_coded = [2*int(val-np.mean(x)) for val in x] if len(x)%2==0 else [int(val-np.mean(x)) for val in x]
+
+x_2 = [each**2 for each in x_coded]
+x_3 = [each**3 for each in x_coded]
+x_4 = [each**4 for each in x_coded]
+x_5 = [each**5 for each in x_coded]
+x_6 = [each**6 for each in x_coded]
+xy = [val*y[i] for i, val in enumerate(x_coded)]
+x2y = [val*y[i] for i, val in enumerate(x_2)]
+x3y = [val*y[i] for i, val in enumerate(x_3)]
+x4y = [val*y[i] for i, val in enumerate(x_4)]
+
+lin_a = np.mean(y)
+lin_b = sum(xy)/sum(x_2)
+y_lin = [lin_a+(lin_b*each) for each in x_coded]
+
+a, c = symbols('a c')
+quad_b = sum(xy)/sum(x_2)
+eq1 = n*a + sum(x_2)*c - sum(y)
+eq2 = sum(x_2)*a + sum(x_4)*c - sum(x2y)
+sols = solve((eq1, eq2), (a, c))
+quad_a = sols[a]
+quad_c = sols[c]
+y_quad = [quad_a+(quad_b*each)+(quad_c*(each**2)) for each in x_coded]
+
+a, b, c, d = symbols('a b c d')
+eq1 = n*a + sum(x_2)*c - sum(y)
+eq2 = sum(x_2)*a + sum(x_4)*c - sum(x2y)
+eq3 = sum(x_2)*b + sum(x_4)*d - sum(xy)
+eq4 = sum(x_4)*b + sum(x_6)*d - sum(x3y)
+sols1 = solve((eq1, eq2), (a, c))
+sols2 = solve((eq3, eq4), (b, d))
+cubic_a = float(sols1[a])
+cubic_c = float(sols1[c])
+cubic_b = float(sols2[b])
+cubic_d = float(sols2[d])
+
+y_cubic = [cubic_a+(cubic_b*each)+(cubic_c*(each**2))+(cubic_d*(each**3)) for each in x_coded]
+
+df = pd.DataFrame({
+    "X" : x,
+    "codedx":x_coded,
+    "linear":y_lin,
+    "quadratic":y_quad,
+    "cubic":y_cubic
+    })
+             
+print(df)       
+
+plt.plot(x_coded, y_lin, color='red', label='Linear Regression')
+plt.plot(x_coded, y_quad, color='green', label='Quadratic Regression')
+plt.plot(x_coded, y_cubic, color='blue', label='Cubic Regression')                                  
+plt.legend()
+plt.show()
+                                         
+# Convert predictions to float numpy arrays
+y_lin_arr = np.array(y_lin, dtype=float)
+y_quad_arr = np.array(y_quad, dtype=float)
+y_cubic_arr = np.array(y_cubic, dtype=float)
+y_arr = np.array(y, dtype=float)
+
+# t-test Linear vs Actual
+t_stat, p_val = ttest_ind(y_lin_arr, y_arr)
+print(f"\nLinear vs Actual -> t = {t_stat:.5f}, p = {p_val:.5f}")
+print("Result:", "Significant difference" if p_val < 0.05 else "No significant difference")
+
+# t-test Quadratic vs Actual
+t_stat1, p_val1 = ttest_ind(y_quad_arr, y_arr)
+print(f"\nQuadratic vs Actual -> t = {t_stat1:.5f}, p = {p_val1:.5f}")
+print("Result:", "Significant difference" if p_val1 < 0.05 else "No significant difference")
+
+# t-test Cubic vs Actual
+t_stat2, p_val2 = ttest_ind(y_cubic_arr, y_arr)
+print(f"\nCubic vs Actual -> t = {t_stat2:.5f}, p = {p_val2:.5f}")
+print("Result:", "Significant difference" if p_val2 < 0.05 else "No significant difference")
+  
+
+# Convert predictions and actuals to arrays
+y_lin_arr = np.array(y_lin, dtype=float)
+y_quad_arr = np.array(y_quad, dtype=float)
+y_cubic_arr = np.array(y_cubic, dtype=float)
+y_arr = np.array(y, dtype=float)
+
+# One-sample z-test: test if mean(predicted - actual) = 0
+# Linear
+z_stat_lin, p_val_lin = ztest(y_lin_arr, y_arr)
+print(f"\nLinear vs Actual -> z = {z_stat_lin:.5f}, p = {p_val_lin:.5f}")
+print("Result:", "Significant difference" if p_val_lin < 0.05 else "No significant difference")
+
+# Quadratic
+z_stat_quad, p_val_quad = ztest(y_quad_arr, y_arr)
+print(f"\nQuadratic vs Actual -> z = {z_stat_quad:.5f}, p = {p_val_quad:.5f}")
+print("Result:", "Significant difference" if p_val_quad < 0.05 else "No significant difference")
+
+# Cubic
+z_stat_cubic, p_val_cubic = ztest(y_cubic_arr, y_arr)
+print(f"\nCubic vs Actual -> z = {z_stat_cubic:.5f}, p = {p_val_cubic:.5f}")
+print("Result:", "Significant difference" if p_val_cubic < 0.05 else "No significant difference")
+
+
