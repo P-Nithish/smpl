@@ -381,3 +381,38 @@ print("\nSimilarity of query with each document:")
 for i, doc_vec in enumerate(doc_vectors):
     sim = cosine_sim(q_lsi.flatten(), doc_vec)
     print(f"Doc{i+1}: {sim:.3f}")
+
+========================
+
+
+import networkx as nx
+import matplotlib.pyplot as plt
+
+# Define the example graph
+graph = {
+    'A': ['B', 'C'],
+    'B': ['C'],
+    'C': ['A'],
+    'D': ['C']
+}
+
+# Create a directed graph
+G = nx.DiGraph()
+
+# Add edges to the graph
+for node, neighbors in graph.items():
+    for neighbor in neighbors:
+        G.add_edge(node, neighbor)
+
+# Set up the plot
+plt.figure(figsize=(8, 6))
+
+# Draw the graph
+nx.draw(G, with_labels=True,arrows=True)
+
+# Add a title
+plt.title("Directed Graph Visualization")
+
+# Show the plot
+plt.show()
+
